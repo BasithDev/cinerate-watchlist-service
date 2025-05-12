@@ -4,12 +4,9 @@ on:
   push:
     branches:
       - main
-      - dev
-    paths:
-      - 'watchlist-service/**'
   pull_request:
-    paths:
-      - 'watchlist-service/**'
+    branches:
+      - main
 
 jobs:
   lint-and-test:
