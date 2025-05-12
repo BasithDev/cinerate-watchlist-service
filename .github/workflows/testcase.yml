@@ -1,0 +1,42 @@
+name: Lint & Test Watchlist Service
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'watchlist-service/**'
+  pull_request:
+    paths:
+      - 'watchlist-service/**'
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up latest LTS Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: watchlist-service
+
+      - name: Run ESLint
+        run: npm run lint
+        working-directory: watchlist-service
+
+      - name: Run tests
+        run: npm test
+        working-directory: watchlist-service
+
+      - name: Handle Rollback on Failure
+        if: failure()
+        run: |
+          echo "❌ Lint or tests failed. Performing rollback..."
+          # Add rollback logic here (e.g., revert deploy, notify, undo commit)
