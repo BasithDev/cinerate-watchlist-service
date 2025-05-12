@@ -22,18 +22,15 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: watchlist-service
 
       - name: Run ESLint
         run: npm run lint
-        working-directory: watchlist-service
 
       - name: Run tests
         run: npm test
-        working-directory: watchlist-service
 
       - name: Handle Rollback on Failure
         if: failure()
         run: |
           echo "❌ Lint or tests failed. Performing rollback..."
-          # Add rollback logic here (e.g., revert deploy, notify, undo commit)
+          # Add rollback logic here (e.g., revert deploy, notify team, etc.)
