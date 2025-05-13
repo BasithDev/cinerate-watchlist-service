@@ -1,3 +1,6 @@
+// Set NODE_ENV to 'test' before importing app
+process.env.NODE_ENV = 'test';
+
 const request = require('supertest');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
@@ -12,6 +15,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  // Close the server to prevent Jest hanging
+  if (app.server) {
+    await new Promise((resolve) => {
+      app.server.close(resolve);
+    });
+  }
   await mongoose.disconnect();
   await mongoServer.stop();
 });

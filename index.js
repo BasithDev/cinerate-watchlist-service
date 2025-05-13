@@ -107,7 +107,7 @@ async function connectToDatabase(uri) {
     await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
       socketTimeoutMS: 45000,
-      autoReconnect: true,
+      // autoReconnect is deprecated and removed
     });
     console.log('Connected to MongoDB');
   } catch (err) {
@@ -158,7 +158,7 @@ if (require.main === module) {
     }
     
     const PORT = process.env.PORT || 3003;
-    app.listen(PORT, () => {
+    app.server = app.listen(PORT, () => {
       console.log(`Watchlist service running on port ${PORT}`);
     });
   }).catch(err => {
