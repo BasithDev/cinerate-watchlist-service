@@ -21,7 +21,10 @@ app.use('/', healthRoutes);
 // Watchlist routes with cache middleware
 app.use('/', (req, res, next) => {
   // Apply cache middleware only to GET routes
-  if (req.method === 'GET' && req.path.match(/^\/[^/]+$/)) {
+  // Exclude health endpoints from caching
+  if (req.method === 'GET' && 
+      req.path.match(/^\/[^/]+$/) && 
+      !req.path.startsWith('/health')) {
     return cacheRoute(1200)(req, res, next);
   }
   next();
