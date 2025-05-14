@@ -2,12 +2,14 @@ const express = require('express');
 const createCacheMiddleware = require('./middleware/cache.middleware');
 const watchlistRoutes = require('./routes/watchlist.routes');
 const healthRoutes = require('./routes/health.routes');
+const { metricsMiddleware } = require('./middleware/metrics.middleware');
 
 // Create Express app
 const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(metricsMiddleware);
 
 // Initialize Redis cache middleware
 const { redisCache, attachRedisCache, cacheRoute } = createCacheMiddleware();
