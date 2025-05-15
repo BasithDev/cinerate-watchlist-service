@@ -11,7 +11,7 @@ setupGracefulShutdown(redisCache);
 async function startServer() {
   try {
     // Connect to MongoDB
-    await connectToDatabase(process.env.MONGO_URI || 'mongodb://localhost:27017/cineRate-watchlist-db');
+    await connectToDatabase(process.env.MONGO_URI || 'mongodb://mongo-svc:27017/cineRate-watchlist-db');
     
     // Connect to Redis
     try {
