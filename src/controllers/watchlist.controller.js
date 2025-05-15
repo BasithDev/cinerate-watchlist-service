@@ -6,13 +6,22 @@ class WatchlistController {
     try {
       const userId = req.params.userId;
       
+      console.log(`Fetching watchlist for userId: ${userId}, type: ${typeof userId}`);
+      console.log(`Request headers:`, req.headers);
+      console.log(`Request path: ${req.path}, method: ${req.method}`);
+      
       // Set cache-control headers to prevent caching
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       
-      // Fetch the latest watchlist data from the database
-      const watchlist = await Watchlist.find({ userId });
+      // Ensure userId is treated as string to match how it's stored in MongoDB
+      const watchlist = await Watchlist.find({ userId: String(userId) });
+      
+      console.log(`Found ${watchlist.length} items in watchlist for user ${userId}`);
+      if (watchlist.length > 0) {
+        console.log('First item:', JSON.stringify(watchlist[0]));
+      }
       
       // Return the watchlist with a timestamp to help identify freshness
       res.json({
