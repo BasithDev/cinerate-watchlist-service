@@ -228,18 +228,46 @@ class RedisCache {
       if (req.method !== 'GET' || this.testMode) {
         return next();
       }
+      
+      // Skip caching for watchlist endpoints - always get fresh data
+      if (req.path.includes('/watchlist')) {
+        console.log('Skipping cache for watchlist endpoint:', req.path);
+        return next();
+      }
 
       // Watchlists are user-specific, so include user ID in the cache key
-      const userId = req.user?.id || req.query.userId || 'anonymous';
+      const userId = req.user?.id || req.query.userId || req.params.userId || 'anonymous';
       const key = `user:${userId}:${req.originalUrl}`;
+      
+      // Use a much shorter TTL for watchlist data (30 seconds)
+      const watchlistTTL = 30; // 30 seconds
+      const actualTTL = req.path.includes('/watchlist') ? watchlistTTL : ttl;
       
       try {
         const cachedData = await this.get(key);
         
         if (cachedData) {
-          console.log(`Cache hit for ${key}`);
-          res.setHeader('X-Cache', 'HIT');
-          return res.json(cachedData);
+          // Check if the cached data has a timestamp and it's recent (within 5 seconds)
+          if (cachedData.timestamp) {
+            const cachedTime = new Date(cachedData.timestamp).getTime();
+            const now = Date.now();
+            const age = (now - cachedTime) / 1000; // age in seconds
+            
+            // If data is older than 5 seconds for watchlist endpoints, consider it a miss
+            if (req.path.includes('/watchlist') && age > 5) {
+              console.log(`Cache expired for ${key} (age: ${age.toFixed(2)}s)`);
+              res.setHeader('X-Cache', 'EXPIRED');
+            } else {
+              console.log(`Cache hit for ${key} (age: ${age.toFixed(2)}s)`);
+              res.setHeader('X-Cache', 'HIT');
+              res.setHeader('X-Cache-Age', `${age.toFixed(2)}s`);
+              return res.json(cachedData);
+            }
+          } else {
+            console.log(`Cache hit for ${key}`);
+            res.setHeader('X-Cache', 'HIT');
+            return res.json(cachedData);
+          }
         }
 
         console.log(`Cache miss for ${key}`);
@@ -250,8 +278,13 @@ class RedisCache {
 
         // Override res.json method to cache the response
         res.json = async (data) => {
-          // Cache the response data
-          await this.set(key, data, ttl);
+          // Add timestamp to the data for freshness checking
+          if (typeof data === 'object' && data !== null) {
+            data.timestamp = data.timestamp || new Date().toISOString();
+          }
+          
+          // Cache the response data with the appropriate TTL
+          await this.set(key, data, actualTTL);
           
           // Call the original json method
           return originalJson.call(res, data);

@@ -4,8 +4,21 @@ class WatchlistController {
   // Get all watchlist items for a user
   async getUserWatchlist(req, res) {
     try {
-      const watchlist = await Watchlist.find({ userId: req.params.userId });
-      res.json(watchlist);
+      const userId = req.params.userId;
+      
+      // Set cache-control headers to prevent caching
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Fetch the latest watchlist data from the database
+      const watchlist = await Watchlist.find({ userId });
+      
+      // Return the watchlist with a timestamp to help identify freshness
+      res.json({
+        watchlist,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Error fetching watchlist:', error);
       res.status(500).json({ error: 'Failed to fetch watchlist' });
@@ -31,12 +44,26 @@ class WatchlistController {
       if (req.redisCache && req.redisCache.connected && userId) {
         try {
           await req.redisCache.invalidateUserWatchlistCache(userId);
+          console.log(`Cache invalidated for user ${userId} after adding item ${contentId}`);
         } catch (error) {
           console.error('Cache invalidation error:', error);
         }
       }
       
-      res.status(201).json({ message: 'Content added to watchlist' });
+      // Get the updated watchlist to return in the response
+      const updatedWatchlist = await Watchlist.find({ userId });
+      
+      // Set cache-control headers to prevent caching
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Return the updated watchlist along with the success message
+      res.status(201).json({
+        message: 'Content added to watchlist',
+        watchlist: updatedWatchlist,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Error adding to watchlist:', error);
       res.status(500).json({ error: 'Failed to add content to watchlist' });
@@ -53,12 +80,26 @@ class WatchlistController {
       if (req.redisCache && req.redisCache.connected && userId) {
         try {
           await req.redisCache.invalidateUserWatchlistCache(userId);
+          console.log(`Cache invalidated for user ${userId} after removing item ${contentId}`);
         } catch (error) {
           console.error('Cache invalidation error:', error);
         }
       }
       
-      res.status(200).json({ message: 'Content removed from watchlist' });
+      // Get the updated watchlist to return in the response
+      const updatedWatchlist = await Watchlist.find({ userId });
+      
+      // Set cache-control headers to prevent caching
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Return the updated watchlist along with the success message
+      res.status(200).json({
+        message: 'Content removed from watchlist',
+        watchlist: updatedWatchlist,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Error removing from watchlist:', error);
       res.status(500).json({ error: 'Failed to remove content from watchlist' });
