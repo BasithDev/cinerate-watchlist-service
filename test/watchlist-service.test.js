@@ -74,8 +74,11 @@ describe('Watchlist API', () => {
     await request(server).post('/add').send(testData);
     const res = await request(server).get(`/${testData.userId}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveLength(1);
-    expect(res.body[0].contentId).toBe(testData.contentId);
+    expect(res.body).toHaveProperty('watchlist');
+    expect(res.body).toHaveProperty('timestamp');
+    expect(res.body.watchlist).toBeInstanceOf(Array);
+    expect(res.body.watchlist).toHaveLength(1);
+    expect(res.body.watchlist[0].contentId).toBe(testData.contentId);
   });
 
   it('should remove content from watchlist', async () => {
